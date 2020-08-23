@@ -11,8 +11,6 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Packages:
-
 ```{r warning=FALSE, include=FALSE}
 ## Libraries
 library(tidyverse)
@@ -22,6 +20,7 @@ library(ggplot2)
 library(ggfortify)
 ```
 
+This is my occupational health project. Key objective is to  
 
 ```{r warning=FALSE}
 ## Data manipulation 
