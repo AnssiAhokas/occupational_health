@@ -1,7 +1,7 @@
 ---
-title: "Untitled"
-author: "aa"
-date: "21 8 2020"
+title: "Ocuupational Health Project"
+author: "Anssi Ahokas"
+date: "23/08/2020"
 output: 
   html_document:
     css: "styles.css"
@@ -94,9 +94,43 @@ The first plots shows us the actual distribution of the age groups.
 
 ```{r}
 ## Age group plot 
+data %>% 
+  filter(question_id == "ika") %>% 
+  ggplot(aes(x = answer)) + geom_bar(stat="count") +
+  scale_x_discrete(limits = c("alle 35 vuotta", "35-44", "45-54", "yli 55"))
+```
+Next we want to see our simulation functions distribution over the age of the respondents.
 
+```{r}
+## Number of simulations
+sims <- 5
+
+## Create a storage matrix. Each column represents one simulation
+simulations <- matrix(ncol = sims, nrow = length(na.omit(ifelse(data$question_id == "ika", sapply(data$answer_id, age_simulation), NA))))
+
+## Make simulations
+for(i in 1:sims){
+  simulations[,i] <- na.omit(ifelse(data$question_id == "ika", sapply(data$answer_id, age_simulation), NA))
+}
+
+## The distribution plot
+simulations %>% 
+  as.data.frame() %>% 
+  gather(key = "simulation", value = "value") %>% 
+  ggplot(aes(x = value, color = simulation)) + geom_density(alpha = 0.2)
 ```
 
+It seems that simulation is working as it should be. Next we need to apply the simulation to our actual data.
+
+```{r}
+## Seed for reproducibility
+set.seed(1)
+
+## Simulate the age data
+data$age_simulated <- ifelse(data$question_id == "ika", sapply(data$answer_id, age_simulation), NA)
+```
+
+Because we are interested only in ceratin things we will filter the data frame even further.
 
 ```{r}
 ## Filter the data
@@ -104,7 +138,12 @@ data <- data %>%
   select(person_id, year, question_id, answer, age_simulated) %>% 
   filter(question_id %in% c("tol2008", "b1", "f2", "ika", "t11")) %>% 
   mutate(answer = ifelse(question_id == "ika", age_simulated, answer)) %>% 
-  select(-age_simulated)
+  select(-age_simulated) %>% 
+  spread(question_id, answer)
+```
+
+```{r}
+
 ```
 
 
