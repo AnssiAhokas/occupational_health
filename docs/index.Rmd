@@ -99,6 +99,7 @@ data %>%
   ggplot(aes(x = answer)) + geom_bar(stat="count") +
   scale_x_discrete(limits = c("alle 35 vuotta", "35-44", "45-54", "yli 55"))
 ```
+
 Next we want to see our simulation functions distribution over the age of the respondents.
 
 ```{r}
@@ -153,7 +154,7 @@ data$working_ability <- as.numeric(data$working_ability)
 
 ## Target variable for survival analysis
 data <- data %>% 
-  mutate(tyokyky = ifelse(t11 < 6, 1, 0))
+  mutate(target = ifelse(working_ability < 6, 1, 0))
 
 ## Classification of physical work
 data <- data %>% 
@@ -169,4 +170,25 @@ data <- data %>%
 
 
 
+```{r fig.height=7, warning=FALSE}
+model <- survfit(Surv(age, target) ~ sex, data = data)
+
+ggsurvplot(model,
+           data = data,
+           xlim = c(35, 64),
+           ylim = c(0.4, 1),
+           conf.int = TRUE,
+           break.time.by = 5,
+           conf.int.style = "step",
+           legend.labs = c("Male", "Female"),
+           legend.title = "",
+           ggtheme = theme_light(),
+           palette = c("#8cb8ff", "#780000"),
+           risk.table = "abs_pct",  
+           risk.table.y.text.col = TRUE,
+           risk.table.y.text = FALSE,
+           xlab = "Ikä",
+           ylab = "Hyvän työkyvyn todennäköisyys",
+          )
+```
 
