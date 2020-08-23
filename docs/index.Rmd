@@ -130,7 +130,10 @@ set.seed(1)
 data$age_simulated <- ifelse(data$question_id == "ika", sapply(data$answer_id, age_simulation), NA)
 ```
 
-Because we are interested only in ceratin things we will filter the data frame even further.
+Because we are interested only in certain things we will filter the data frame even further.
+The tricky part is to choose our target variable for the survival analysis. The target needs to be binomial and our objective is to examine how respondents ability to work changes over certain attributes. Respondents have evaluated their working ability on the scale from 1 to 10. We will set our target to get value of 1 if the ability to work is 5 or below. This will mean that our belief is that the person has lost his ability to work dramatically when he or she answer the working ability to be 5 or below. This is of course the turning point of the research. More lower limit will not get as dramatic results. But our objective is to examine different sectors and compare them. I think this doesn't make much difference in that scope. 
+
+The second thing is to choose which of the work is physically stressful. We will classify the work as physical work if the respondent answer his work to include physic stress at least in some level. We need to remember that this doesn't include job which is mentally stressful. This has it own question in survey.  
 
 ```{r}
 ## Filter the data
@@ -140,10 +143,30 @@ data <- data %>%
   mutate(answer = ifelse(question_id == "ika", age_simulated, answer)) %>% 
   select(-age_simulated) %>% 
   spread(question_id, answer)
+
+## Rename variables
+colnames(data) <- c("person_id", "year", "sex", "physical_stress", "age", "working_ability", "sector")
+
+## Change classes of variables
+data$age <- as.numeric(data$age)
+data$working_ability <- as.numeric(data$working_ability)
+
+## Target variable for survival analysis
+data <- data %>% 
+  mutate(tyokyky = ifelse(t11 < 6, 1, 0))
+
+## Classification of physical work
+data <- data %>% 
+  mutate(physical_work = case_when(
+    physical_stress == "hyvin rasittavaa" ~ 1, 
+    physical_stress == "melko rasittavaa" ~ 1, 
+    physical_stress == "jonkin verran rasittavaa" ~ 1, 
+    physical_stress == "melko kevyttÃ¤" ~ 0,
+    physical_stress == "kevyttÃ¤" ~ 0,
+    TRUE ~ 2)) %>% 
+  filter(physical_work != 2)
 ```
 
-```{r}
 
-```
 
 
