@@ -1,0 +1,110 @@
+---
+title: "Untitled"
+author: "aa"
+date: "21 8 2020"
+output: 
+  html_document:
+    css: "styles.css"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Packages:
+
+```{r warning=FALSE, include=FALSE}
+## Libraries
+library(tidyverse)
+library(survival)
+library(survminer)
+library(ggplot2)
+library(ggfortify)
+```
+
+
+```{r warning=FALSE}
+## Data manipulation 
+
+## Set working directory 
+dir <- "C:/Users/anssi/Desktop/Ohjelmointi/R_Projektit/occupational_health"
+setwd(dir)
+
+## Load the csv files
+data_raw <- read.csv("data/2017-05-29-tyojaterveys-opendata-COMPLETE.csv", sep = "")
+meta_raw <- read.csv("data/2017-05-29-tyojaterveys-metadata-LARGE.csv", sep = "")
+
+## Metadata transformation
+meta <- meta_raw %>% 
+  select(questionID, columnNameLong, codeKey) %>% 
+  na.omit() 
+
+meta <- meta %>% 
+  separate(codeKey, sep = ",", into = paste0("codeKey", seq_len(max(str_count(meta$codeKey, ",")) + 1))) %>% 
+  gather(key = "codeKey", value = "answer", -questionID, -columnNameLong) %>% 
+  separate(answer, sep = "=", into = c("answer", "descr")) %>% 
+  select(-codeKey)
+
+## Data transformation
+data <- data_raw %>% 
+  gather(key = "questionID", value = "answer", -id, -vuosi)
+
+## Join with actual data with metadata
+data <- left_join(data,  meta %>% select(questionID, columnNameLong), by = c("questionID" = "questionID")) %>% 
+  distinct() %>% 
+  na.omit()
+
+data <- left_join(data, meta %>% select(questionID, answer, descr), by = c("questionID" = "questionID", "answer" = "answer"))
+
+## Some of the answer need to be edited manually
+data$descr <- ifelse(data$questionID == "t11", data$answer, data$descr)
+data$descr <- ifelse(data$questionID == "tol2008", data$answer, data$descr)
+
+## Last NA -value omit
+data <- na.omit(data)
+
+## Rename variables
+colnames(data) <- c("person_id", "year", "question_id", "answer_id", "question", "answer")
+```
+
+Because we are interested on the age of the respondent we need to edit it to proper format.
+
+The difficulty of the age lies in the way the response is given. The respondent can answer his/her age to be somewhere between 35-44 depending on the age group.
+To perform proper survival analysis on the data, we need the age to be numerical variable. The solution to this problem is to simulate the respondents age.
+First we start by creating a simulation function. Round(runif(min, max)) combination returns a discrete uniform distribution across the min and max values. 
+
+```{r}
+## Age simulation function
+age_simulation <- function(x){
+  if(x == "1"){
+    round(runif(1, min = 24, max = 34), digits = 1)
+  } else if(x == "2") {
+    round(runif(1, min = 34, max = 44), digits = 1)
+  } else if(x == "3") {
+    round(runif(1, min = 44, max = 54), digits = 1)
+  } else {
+    round(runif(1, min = 54, max = 64), digits = 1)
+  }
+}
+```
+
+To test if the simulation works as it should, we want to see the distribution of the age groups and the numerical age values.
+
+The first plots shows us the actual distribution of the age groups.
+
+```{r}
+## Age group plot 
+
+```
+
+
+```{r}
+## Filter the data
+data <- data %>% 
+  select(person_id, year, question_id, answer, age_simulated) %>% 
+  filter(question_id %in% c("tol2008", "b1", "f2", "ika", "t11")) %>% 
+  mutate(answer = ifelse(question_id == "ika", age_simulated, answer)) %>% 
+  select(-age_simulated)
+```
+
+

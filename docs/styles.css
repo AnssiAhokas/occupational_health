@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css?family=Josefin+Sans');
+
+h1 {
+  color: rgb(255, 0, 89);
+}
+
+h2 {
+  color: rgb(255, 0, 89);
+}
+
+body {
+  background:linear-gradient(0deg,rgba(0,0,0,0.5),rgba(0,0,0,0.5)),url("navy-blue.jpg") center center;
+  color: white;
+  font-family: 'Josefin Sans', sans-serif;
+}
+
+pre {
+  background:linear-gradient(0deg,rgba(0,0,0,0.5),rgba(0,0,0,0.5)),url("navy-blue.jpg") center center;
+  color: rgb(255, 0, 89);
+  font-family: 'Josefin Sans', sans-serif;
+}
+
+pre code {
+  background:linear-gradient(0deg,rgba(0,0,0,0.5),rgba(0,0,0,0.5)),url("navy-blue.jpg") center center;
+  color: rgb(255, 0, 89);
+  font-family: 'Josefin Sans', sans-serif;
+}
+
+pre:not([class]) {
+  bbackground:linear-gradient(0deg,rgba(0,0,0,0.5),rgba(0,0,0,0.5)),url("navy-blue.jpg") center center;
+  color: rgb(255, 0, 89);
+  font-family: 'Josefin Sans', sans-serif;
+}
