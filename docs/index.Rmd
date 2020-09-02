@@ -18,6 +18,12 @@ library(survival)
 library(survminer)
 library(ggplot2)
 library(ggfortify)
+
+## Theme
+theme_aa <- function(){
+  theme(plot.background = element_rect(fill = "#feffeb"),
+        panel.background = element_rect(fill = "#feffeb"))
+}
 ```
 
 This is my occupational health project. Key objective is to  
@@ -96,7 +102,8 @@ The first plots shows us the actual distribution of the age groups.
 data %>% 
   filter(question_id == "ika") %>% 
   ggplot(aes(x = answer)) + geom_bar(stat="count") +
-  scale_x_discrete(limits = c("alle 35 vuotta", "35-44", "45-54", "yli 55"))
+  scale_x_discrete(limits = c("alle 35 vuotta", "35-44", "45-54", "yli 55")) +
+  theme_aa()
 ```
 
 Next we want to see our simulation functions distribution over the age of the respondents.
@@ -119,8 +126,7 @@ simulations %>%
   gather(key = "simulation", value = "value") %>% 
   ggplot(aes(x = value, color = simulation)) + 
   geom_density(alpha = 0.2) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = "#feffeb"))
+  theme_aa()
 ```
 
 It seems that simulation is working as it should be. Next we need to apply the simulation to our actual data.
@@ -184,7 +190,7 @@ ggsurvplot(model,
            conf.int.style = "step",
            legend.labs = c("Male", "Female"),
            legend.title = "",
-           ggtheme = theme_light(),
+           ggtheme = theme_aa(),
            palette = c("#8cb8ff", "#780000"),
            risk.table = "abs_pct",  
            risk.table.y.text.col = TRUE,
