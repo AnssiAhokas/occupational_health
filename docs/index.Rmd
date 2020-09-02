@@ -1,5 +1,5 @@
 ---
-title: "Ocuupational Health Project"
+title: "Occupational Health Project"
 author: "Anssi Ahokas"
 date: "23/08/2020"
 output: 
@@ -103,7 +103,7 @@ Next we want to see our simulation functions distribution over the age of the re
 
 ```{r}
 ## Number of simulations
-sims <- 5
+sims <- 2
 
 ## Create a storage matrix. Each column represents one simulation
 simulations <- matrix(ncol = sims, nrow = length(na.omit(ifelse(data$question_id == "ika", sapply(data$answer_id, age_simulation), NA))))

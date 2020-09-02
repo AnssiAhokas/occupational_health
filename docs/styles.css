@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css?family=Josefin+Sans');
 
 :root {
-  --color_bg: rgb(255, 243, 220);
-  --color_text: rgb(rgb(29, 39, 87);
+  --color_bg:rgb(255, 243, 220);
+  --color_text:rgb(29, 39, 87);
 }
 
 h1 {
@@ -15,7 +15,7 @@ h2 {
 
 body {
   background:var(--color_bg);
-  color: white;
+  color: var(--color_text);
   font-family: 'Josefin Sans', sans-serif;
 }
 
