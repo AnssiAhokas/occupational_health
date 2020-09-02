@@ -117,7 +117,10 @@ for(i in 1:sims){
 simulations %>% 
   as.data.frame() %>% 
   gather(key = "simulation", value = "value") %>% 
-  ggplot(aes(x = value, color = simulation)) + geom_density(alpha = 0.2)
+  ggplot(aes(x = value, color = simulation)) + 
+  geom_density(alpha = 0.2) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = "#feffeb"))
 ```
 
 It seems that simulation is working as it should be. Next we need to apply the simulation to our actual data.
