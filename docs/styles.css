@@ -33,7 +33,7 @@ pre {
 pre code {
   background:var(--color_code_bg);
   color: var(--color_text);
-  font-family: 'Calibri', serif;
+  font-family: Consolas,monaco,monospace;
 }
 
 .hljs-string {
