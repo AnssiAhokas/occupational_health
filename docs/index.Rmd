@@ -1,10 +1,11 @@
 ---
-title: "Occupational Health Project"
+title: "Occupational Health Analysis"
 author: "Anssi Ahokas"
 date: "23/08/2020"
 output: 
   html_document:
     css: "styles.css"
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -21,8 +22,8 @@ library(ggfortify)
 
 ## Theme
 theme_aa <- function(){
-  theme(plot.background = element_rect(fill = "#feffeb"),
-        panel.background = element_rect(fill = "#feffeb"))
+  theme(plot.background = element_rect(fill = "#ffffff"),
+        panel.background = element_rect(fill = "#ffffff"))
 }
 ```
 

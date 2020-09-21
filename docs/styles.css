@@ -2,37 +2,58 @@
 
 :root {
   --color_bg:rgb(255, 255, 255);
+  --color_code_bg:rgb(255, 255, 255);
   --color_text:rgb(24, 38, 40);
+  --color_code_string:rgb(101, 204, 183);
+  --color_code_function:rgb(101, 204, 183);
 }
 
 h1 {
   color: var(--color_text);
+  font-weight: bold;
 }
 
 h2 {
   color: var(--color_text);
+  font-weight: bold;
 }
 
 body {
   background:var(--color_bg);
   color: var(--color_text);
-  font-family: 'Times New Roman', serif;
+  font-family: 'Calibri', serif;
 }
 
 pre {
-  background:var(--color_bg);
+  background:var(--color_code_bg);
   color: var(--color_text);
-  font-family: 'Times New Roman', serif;
+  font-family: 'Calibri', serif;
 }
 
 pre code {
-  background:var(--color_bg);
+  background:var(--color_code_bg);
   color: var(--color_text);
-  font-family: 'Times New Roman', serif;
+  font-family: 'Calibri', serif;
+}
+
+.hljs-string {
+    color: var(--color_code_string);
+}
+
+.hljs-comment {
+    color: var(--color_code_string);
+    font-weight: bold;
+}
+
+.hljs-keyword {
+    color: var(--color_code_string);
+    font-weight: bold;
 }
 
 pre:not([class]) {
   background:var(--color_bg);
   color: var(--color_text);
-  font-family: 'Times New Roman', serif;
+  font-family: 'Calibri', serif;
 }
+
+/*font-style: italic;*/
