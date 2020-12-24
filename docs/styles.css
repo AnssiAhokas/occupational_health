@@ -2,10 +2,10 @@
 
 :root {
   --color_bg:rgb(49, 68, 85);
-  --color_code_bg:rgb(255, 255, 255);
+  --color_code_bg:rgb(49, 68, 85);
   --color_text:rgb(255, 255, 255);
-  --color_code_string:rgb(101, 204, 183);
-  --color_code_function:rgb(101, 204, 183);
+  --color_code_string:rgb(201, 101, 103);
+  --color_code_function:rgb(201, 101, 103);
 }
 
 h1 {
