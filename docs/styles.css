@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css?family=Josefin+Sans');
 
 :root {
-  --color_bg:rgb(255, 255, 255);
+  --color_bg:rgb(49, 68, 85);
   --color_code_bg:rgb(255, 255, 255);
-  --color_text:rgb(24, 38, 40);
+  --color_text:rgb(255, 255, 255);
   --color_code_string:rgb(101, 204, 183);
   --color_code_function:rgb(101, 204, 183);
 }
