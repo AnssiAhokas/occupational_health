@@ -33,7 +33,7 @@ This is my occupational health project. Key objective is to
 ## Data manipulation 
 
 ## Set working directory 
-dir <- "C:/Users/anssi/Desktop/Ohjelmointi/R_Projektit/occupational_health"
+dir <- here::here()
 setwd(dir)
 
 ## Load the csv files
