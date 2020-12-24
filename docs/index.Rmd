@@ -22,8 +22,9 @@ library(ggfortify)
 
 ## Theme
 theme_aa <- function(){
-  theme(plot.background = element_rect(fill = "#ffffff"),
-        panel.background = element_rect(fill = "#ffffff"))
+  theme(plot.background = element_rect(fill = "#314455"),
+        panel.background = element_rect(fill = "#314455"),
+        )
 }
 ```
 
@@ -102,7 +103,7 @@ The first plots shows us the actual distribution of the age groups.
 ## Age group plot 
 data %>% 
   filter(question_id == "ika") %>% 
-  ggplot(aes(x = answer)) + geom_bar(stat="count") +
+  ggplot(aes(x = answer)) + geom_bar(stat="count", fill = "#C96567") +
   scale_x_discrete(limits = c("alle 35 vuotta", "35-44", "45-54", "yli 55")) +
   theme_aa()
 ```
