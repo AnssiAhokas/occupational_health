@@ -232,7 +232,34 @@ data2 <- data %>%
 data4 <- unique(data2$answer); data4
 table(data2$answer, data2$year)
 ```
+Vertaistuki myös mukaan
 
+```{r}
+data2 <- data %>% 
+  filter(question_id == "j19")
+data4 <- unique(data2$answer); data4
+table(data2$answer, data2$year)
+```
+Otetaan vielä mukaan ammatilliset kehitysmahdollisuudet eli j37
+
+
+```{r}
+data2 <- data %>% 
+  filter(question_id == "j37")
+data4 <- unique(data2$answer); data4
+table(data2$answer, data2$year)
+```
+Ei otetakaan mukaan sillä vähän vuosia!
+
+Katsotaan työterveyshuoltoa
+
+```{r}
+data2 <- data %>% 
+  filter(question_id == "l1a")
+data4 <- unique(data2$answer); data4
+table(data2$answer, data2$year)
+```
+Otetaan se mukaan mutta filtteröidään myös
 
 Iän simulointi
 
@@ -262,7 +289,9 @@ data_final <- data3 %>%
   filter(vuosi > 2002) %>% #Vuosi 1997 pudettu pois toimialan vuoksi. Vuoden 1997 ja 2000 pudotettu pois etätyön vuoksi 
   filter(j20 < 6) %>% # Eli tässä otetaan pois kaikki kenellä ei ole esimiestä tai ei osaa vastata
   filter(j35 < 6) %>% # Otetaan tässä pois ne jotka eivät osaa vastata JohdonHuolenpitoon
+  filter(j19 < 6) %>% # Otetaan vertaistuesta pois taas ne jotka eivät osaa sanoa 
   filter(j16b < 6) %>% # Otetaan tiimityöstä pois jotka eivät vastaa/osaa sanoa
+  filter(l1a < 3) %>% # Otetaan pois jotka eivät vastaa/osaa sanoa
   select(id,
          vuosi,
          b1, #Sukupuoli
@@ -273,13 +302,17 @@ data_final <- data3 %>%
          j20, #esimiestuki, ei vielä muokattu, vain filtteröity
          j35, #johdonHuolenpito, ei muoktattu, vain filtteröity
          j16b, #tiimityö, ei muokattu, filtteröity
+         j19, # vertaistuki
+         l1a, # onko työterveyttä dummy
          target_tyokykyHenkinen,
          target_tyokykyFyysinen,
          target_tyokykyArvio,
          target_tyokyky
          ) %>% 
-  mutate(j20j35 = j20 + j35) %>%  # uusi muuttuja johdon huolenpidosta ja esimiestuesta. Aika vähän arvoja ääripäässä eli 8, 9.. pitäisikö yhdistää??
-  mutate(j20j35mod = ifelse(j20j35 > 8, 8, j20j35)) %>% # yhdistetty j20j35 ja korvattu ääriarvot, tämä hyvä selittäjä
+  mutate(j20j35 = j20 + j35) %>% # uusi muuttuja johdon huolenpidosta ja esimiestuesta. Aika vähän arvoja ääripäässä eli 8, 9.. pitäisikö yhdistää??
+  mutate(j20j35j19 = j20 + j35 + j19) %>% # mukana myös vertaistuki
+  mutate(j20j35mod = ifelse(j20j35 > 7, 8, j20j35)) %>% # yhdistetty j20j35 ja korvattu ääriarvot, tämä hyvä selittäjä
+  mutate(j20j35j19mod = ifelse(j20j35j19 > 9, 10, j20j35j19)) %>% # yhdistetty j20j35 ja korvattu ääriarvot, tämä hyvä selittäjä
   mutate(b24fmod = ifelse(b24f == 0, 0, 1))  # Tehdään etätyödummy muuttuja
 ```
 
@@ -294,11 +327,98 @@ ggsurvplot(model,
           )
 ```
 
+```{r}
+model <- survfit(Surv(ika_simuloitu, target_tyokykyFyysinen) ~ j20j35mod, data = data_final)
 
-Muistiinpano: Esimiestuki (eli j20) on erittäin hyvä selittävä muuttuja!!! Siihen voisi vielä ottaa juuri sukupuolen mukaan, jotta nähdään vaikutus sukupuolittain. Havaintoja aika paljon ja kuvaaja näyttää hyvältä. Myös johdonHuolenpit(j35) antaa samanlaisia indikaattoreita. Kuvaaja erittäin hyvä. Tässä olisi aihetta raportille...Lisäsin nyt vielä muuttujan j20j35 joka on yhteenlaskettu esimiestuesta ja johdonhuolenpidosta... Tässä mitä pienempi arvo sitä enemmän tukea. Tässä näkyy sama efekti. Voisi melkein käyttää tätä. Etätyö ei oikein tuo mitään lisää... sen voisi varmaan jättää pois. Tiimityöllä myös yllätävän positiivinen vaikutus ja kuvaaja näyttää hyvätlä.
+ggsurvplot(model,
+           data = data_final,
+           xlim = c(35, 62),
+           ylim = c(0.2, 1)
+          )
+
+model <- survfit(Surv(ika_simuloitu, target_tyokykyHenkinen) ~ j20j35mod, data = data_final)
+
+ggsurvplot(model,
+           data = data_final,
+           xlim = c(35, 62),
+           ylim = c(0.2, 1)
+          )
+
+model <- survfit(Surv(ika_simuloitu, target_tyokyky) ~ j20j35mod, data = data_final)
+
+ggsurvplot(model,
+           data = data_final,
+           xlim = c(35, 62),
+           ylim = c(0.2, 1)
+          )
+```
 
 
 
+
+```{r}
+model <- survfit(Surv(ika_simuloitu, target_tyokyky) ~ j19, data = data_final)
+
+ggsurvplot(model,
+           data = data_final,
+           xlim = c(35, 64),
+           ylim = c(0.2, 1)
+          )
+```
+
+
+```{r}
+model <- survfit(Surv(ika_simuloitu, target_tyokyky) ~ j20j35j19mod, data = data_final)
+
+ggsurvplot(model,
+           data = data_final,
+           xlim = c(35, 62),
+           ylim = c(0.2, 1),
+           #surv.median.line = "hv",
+           #conf.int = TRUE
+          )
+
+model <- survfit(Surv(ika_simuloitu, target_tyokykyFyysinen) ~ j20j35j19mod, data = data_final)
+
+ggsurvplot(model,
+           data = data_final,
+           xlim = c(35, 62),
+           ylim = c(0.2, 1)
+          )
+
+model <- survfit(Surv(ika_simuloitu, target_tyokykyHenkinen) ~ j20j35j19mod, data = data_final)
+
+ggsurvplot(model,
+           data = data_final,
+           xlim = c(35, 62),
+           ylim = c(0.2, 1)
+          )
+```
+
+```{r}
+model <- survfit(Surv(ika_simuloitu, target_tyokyky) ~ l1a, data = data_final)
+
+ggsurvplot(model,
+           data = data_final,
+           xlim = c(35, 64),
+           ylim = c(0.2, 1)
+          )
+```
+
+Muistiinpano: Esimiestuki (eli j20) on erittäin hyvä selittävä muuttuja!!! Siihen voisi vielä ottaa juuri sukupuolen mukaan, jotta nähdään vaikutus sukupuolittain. Havaintoja aika paljon ja kuvaaja näyttää hyvältä. Myös johdonHuolenpit(j35) antaa samanlaisia indikaattoreita. Kuvaaja erittäin hyvä. Tässä olisi aihetta raportille...Lisäsin nyt vielä muuttujan j20j35 joka on yhteenlaskettu esimiestuesta ja johdonhuolenpidosta... Tässä mitä pienempi arvo sitä enemmän tukea. Tässä näkyy sama efekti. Voisi melkein käyttää tätä. Etätyö ei oikein tuo mitään lisää... sen voisi varmaan jättää pois. Tiimityöllä myös yllätävän positiivinen vaikutus ja kuvaaja näyttää hyvätlä. Työterveysdummy on vähän turha... Ei kannata ottaa mukaan. Näyttää siltä, että aiheen kannattaa pyöriä johdon, esimiesten ja vertaistuen ympärillä. Siitä saa hyvää analyysiä..
+
+Seuraavaksi voisi kokeilla vielä tehdä surv table jossa p arvot
+
+```{r}
+res.cox <- coxph(Surv(ika_simuloitu, target_tyokyky) ~ j20 + j35 + j19 + b1, data = data_final)
+res.cox
+ggforest(res.cox)
+```
+
+
+```{r}
+table(data_final$target_tyokykyHenkinen, data_final$target_tyokykyFyysinen)
+```
 
 
 Saadaanko ääkköset pois??
