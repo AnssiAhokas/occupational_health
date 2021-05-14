@@ -1,11 +1,11 @@
 ---
-title: "Occupational Health Analysis"
+title: "Open data: Occupational Health"
 author: "Anssi Ahokas"
 date: "23/08/2020"
 output: 
   html_document:
     css: "styles.css"
-    code_folding: hide
+    #code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -41,6 +41,12 @@ meta <- meta_raw
 Because we want to research working ability we need to create proper target(s)
 
 ```{r}
+## Check target answers
+
+```
+
+
+```{r}
 ## Three different targets
 data$target_tyokykyHenkinen <- ifelse(data$t13 %in% c("4", "5"), 1, 0)
 data$target_tyokykyFyysinen <- ifelse(data$t12 %in% c("4", "5"), 1, 0)
@@ -54,7 +60,7 @@ data$target_tyokyky <- ifelse(
 ```
 
 
-```{r}
+```{r fig.height=6, fig.width = 12, warning=FALSE}
 ## Age group plot 
 data %>% 
   select(ika) %>% 
@@ -80,7 +86,7 @@ age_simulation <- function(x){
 ```
 
 
-```{r}
+```{r fig.height=6, fig.width = 12, warning=FALSE}
 ## Number of simulations
 sims <- 9
 
@@ -138,7 +144,7 @@ data <- data %>%
 
 
 
-```{r}
+```{r fig.height=6, fig.width = 12, warning=FALSE}
 model <- survfit(Surv(ika_simuloitu, target_tyokyky) ~ j20j35mod, data = data)
 
 ggsurvplot(model,
@@ -149,5 +155,8 @@ ggsurvplot(model,
           )
 ```
 
+```{r}
+## Infographics
+```
 
 
