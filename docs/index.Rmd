@@ -41,10 +41,13 @@ meta <- meta_raw
 Because we want to research working ability we need to create proper target(s)
 
 ```{r}
-## Check target answers
+## Filter possible targets
+targets <- data %>% 
+  select(vuosi, t11, t12, t13)
 
+## Check for possible NA values
+apply(targets, 2, function(col){sum(is.na(col))})
 ```
-
 
 ```{r}
 ## Three different targets
