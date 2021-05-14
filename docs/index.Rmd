@@ -55,6 +55,16 @@ data$target_tyokyky <- ifelse(
 
 
 ```{r}
+## Age group plot 
+data %>% 
+  select(ika) %>% 
+  ggplot(aes(x = ika)) + geom_bar(stat="count", fill = "#C96567") +
+  scale_x_discrete(limits = c("alle 35 vuotta", "35-44", "45-54", "yli 55")) +
+  theme_aa()
+```
+
+
+```{r}
 ## Age simulation function
 age_simulation <- function(x){
   if(x == "1"){
@@ -69,6 +79,27 @@ age_simulation <- function(x){
 }
 ```
 
+
+```{r}
+## Number of simulations
+sims <- 9
+
+## Create a storage matrix. Each column represents one simulation
+simulations <- matrix(ncol = sims, nrow = length(data$ika))
+
+## Make simulations
+for(i in 1:sims){
+  simulations[,i] <- sapply(data$ika, age_simulation)
+}
+
+## The distribution plot
+simulations %>% 
+  as.data.frame() %>% 
+  gather(key = "simulation", value = "value") %>% 
+  ggplot(aes(x = value, color = simulation)) + 
+  geom_density(alpha = 0.2) +
+  theme_aa()
+```
 
 ```{r}
 data$ika_simuloitu <- sapply(data$ika, age_simulation)
@@ -107,176 +138,16 @@ data <- data %>%
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Original
-
-```{r warning=FALSE}
-## Data manipulation 
-
-## Set working directory 
-dir <- here::here()
-setwd(dir)
-
-## Load the csv files
-data_raw <- read.csv("data/2017-05-29-tyojaterveys-opendata-COMPLETE.csv", sep = "")
-meta_raw <- read.csv("data/2017-05-29-tyojaterveys-metadata-LARGE.csv", sep = "")
-
-## Metadata transformation
-meta <- meta_raw %>% 
-  select(questionID, columnNameLong, codeKey) %>% 
-  na.omit() 
-
-meta <- meta %>% 
-  separate(codeKey, sep = ",", into = paste0("codeKey", seq_len(max(str_count(meta$codeKey, ",")) + 1))) %>% 
-  gather(key = "codeKey", value = "answer", -questionID, -columnNameLong) %>% 
-  separate(answer, sep = "=", into = c("answer", "descr")) %>% 
-  select(-codeKey)
-
-## Data transformation
-data <- data_raw %>% 
-  gather(key = "questionID", value = "answer", -id, -vuosi)
-
-## Join with actual data with metadata
-data <- left_join(data,  meta %>% select(questionID, columnNameLong), by = c("questionID" = "questionID")) %>% 
-  distinct() %>% 
-  na.omit()
-
-data <- left_join(data, meta %>% select(questionID, answer, descr), by = c("questionID" = "questionID", "answer" = "answer"))
-
-## Some of the answer need to be edited manually
-data$descr <- ifelse(data$questionID == "t11", data$answer, data$descr)
-data$descr <- ifelse(data$questionID == "tol2008", data$answer, data$descr)
-
-## Last NA -value omit
-data <- na.omit(data)
-
-## Rename variables
-colnames(data) <- c("person_id", "year", "question_id", "answer_id", "question", "answer")
-```
-
-
-Because we are interested on the age of the respondent we need to edit it to proper format.
-
-The difficulty of the age lies in the way the response is given. The respondent can answer his/her age to be somewhere between 35-44 depending on the age group.
-To perform proper survival analysis on the data, we need the age to be numerical variable. The solution to this problem is to simulate the respondents age.
-First we start by creating a simulation function. Round(runif(min, max)) combination returns a discrete uniform distribution across the min and max values. 
-
-
-
-To test if the simulation works as it should, we want to see the distribution of the age groups and the numerical age values.
-
-The first plots shows us the actual distribution of the age groups.
-
 ```{r}
-## Age group plot 
-data %>% 
-  filter(question_id == "ika") %>% 
-  ggplot(aes(x = answer)) + geom_bar(stat="count", fill = "#C96567") +
-  scale_x_discrete(limits = c("alle 35 vuotta", "35-44", "45-54", "yli 55")) +
-  theme_aa()
-```
-
-Next we want to see our simulation functions distribution over the age of the respondents.
-
-```{r}
-## Number of simulations
-sims <- 2
-
-## Create a storage matrix. Each column represents one simulation
-simulations <- matrix(ncol = sims, nrow = length(na.omit(ifelse(data$question_id == "ika", sapply(data$answer_id, age_simulation), NA))))
-
-## Make simulations
-for(i in 1:sims){
-  simulations[,i] <- na.omit(ifelse(data$question_id == "ika", sapply(data$answer_id, age_simulation), NA))
-}
-
-## The distribution plot
-simulations %>% 
-  as.data.frame() %>% 
-  gather(key = "simulation", value = "value") %>% 
-  ggplot(aes(x = value, color = simulation)) + 
-  geom_density(alpha = 0.2) +
-  theme_aa()
-```
-
-It seems that simulation is working as it should be. Next we need to apply the simulation to our actual data.
-
-```{r}
-## Seed for reproducibility
-set.seed(1)
-
-## Simulate the age data
-data$age_simulated <- ifelse(data$question_id == "ika", sapply(data$answer_id, age_simulation), NA)
-```
-
-Because we are interested only in certain things we will filter the data frame even further.
-The tricky part is to choose our target variable for the survival analysis. The target needs to be binomial and our objective is to examine how respondents ability to work changes over certain attributes. Respondents have evaluated their working ability on the scale from 1 to 10. We will set our target to get value of 1 if the ability to work is 5 or below. This will mean that our belief is that the person has lost his ability to work dramatically when he or she answer the working ability to be 5 or below. This is of course the turning point of the research. More lower limit will not get as dramatic results. But our objective is to examine different sectors and compare them. I think this doesn't make much difference in that scope. 
-
-The second thing is to choose which of the work is physically stressful. We will classify the work as physical work if the respondent answer his work to include physic stress at least in some level. We need to remember that this doesn't include job which is mentally stressful. This has it own question in survey.  
-
-```{r}
-## Filter the data
-data <- data %>% 
-  select(person_id, year, question_id, answer, age_simulated) %>% 
-  filter(question_id %in% c("tol2008", "b1", "f2", "ika", "t11")) %>% 
-  mutate(answer = ifelse(question_id == "ika", age_simulated, answer)) %>% 
-  select(-age_simulated) %>% 
-  spread(question_id, answer)
-
-## Rename variables
-colnames(data) <- c("person_id", "year", "sex", "physical_stress", "age", "working_ability", "sector")
-
-## Change classes of variables
-data$age <- as.numeric(data$age)
-data$working_ability <- as.numeric(data$working_ability)
-
-## Target variable for survival analysis
-data <- data %>% 
-  mutate(target = ifelse(working_ability < 6, 1, 0))
-
-## Classification of physical work
-data <- data %>% 
-  mutate(physical_work = case_when(
-    physical_stress == "hyvin rasittavaa" ~ 1, 
-    physical_stress == "melko rasittavaa" ~ 1, 
-    physical_stress == "jonkin verran rasittavaa" ~ 1, 
-    physical_stress == "melko kevyttÃ¤" ~ 0,
-    physical_stress == "kevyttÃ¤" ~ 0,
-    TRUE ~ 2)) %>% 
-  filter(physical_work != 2)
-```
-
-
-
-```{r fig.height=7, warning=FALSE}
-model <- survfit(Surv(age, target) ~ sex, data = data)
+model <- survfit(Surv(ika_simuloitu, target_tyokyky) ~ j20j35mod, data = data)
 
 ggsurvplot(model,
            data = data,
-           xlim = c(35, 64),
-           ylim = c(0.4, 1),
-           conf.int = TRUE,
-           break.time.by = 5,
-           conf.int.style = "step",
-           legend.labs = c("Male", "Female"),
-           legend.title = "",
-           ggtheme = theme_aa(),
-           palette = c("#8cb8ff", "#780000"),
-           xlab = "Ikä",
-           ylab = "Hyvän työkyvyn todennäköisyys",
+           xlim = c(35, 62),
+           ylim = c(0.2, 1),
+           ggtheme = theme_aa()
           )
 ```
+
 
 
