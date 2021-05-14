@@ -1,0 +1,305 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Alustava analyysi:
+
+```{r warning=FALSE, include=FALSE}
+## Libraries
+library(tidyverse)
+library(survival)
+library(survminer)
+library(ggplot2)
+library(ggfortify)
+
+## Theme
+theme_aa <- function(){
+  theme(plot.background = element_rect(fill = "#314455"),
+        panel.background = element_rect(fill = "#314455"),
+        )
+}
+```
+
+```{r warning=FALSE}
+## Data manipulation 
+
+## Set working directory 
+dir <- here::here()
+setwd(dir)
+
+## Load the csv files
+data_raw <- read.csv("data/2017-05-29-tyojaterveys-opendata-COMPLETE.csv", sep = "")
+meta_raw <- read.csv("data/2017-05-29-tyojaterveys-metadata-LARGE.csv", sep = "")
+
+## Metadata transformation
+meta <- meta_raw %>% 
+  select(questionID, columnNameLong, codeKey) %>% 
+  na.omit() 
+
+meta <- meta %>% 
+  separate(codeKey, sep = ",", into = paste0("codeKey", seq_len(max(str_count(meta$codeKey, ",")) + 1))) %>% 
+  gather(key = "codeKey", value = "answer", -questionID, -columnNameLong) %>% 
+  separate(answer, sep = "=", into = c("answer", "descr")) %>% 
+  select(-codeKey)
+
+## Data transformation
+data <- data_raw %>% 
+  gather(key = "questionID", value = "answer", -id, -vuosi)
+
+## Join with actual data with metadata
+data <- left_join(data,  meta %>% select(questionID, columnNameLong), by = c("questionID" = "questionID")) %>% 
+  distinct() %>% 
+  na.omit()
+
+data <- left_join(data, meta %>% select(questionID, answer, descr), by = c("questionID" = "questionID", "answer" = "answer"))
+
+## Some of the answer need to be edited manually
+data$descr <- ifelse(data$questionID == "t11", data$answer, data$descr)
+data$descr <- ifelse(data$questionID == "tol2008", data$answer, data$descr)
+
+## Last NA -value omit
+data <- na.omit(data)
+
+## Rename variables
+colnames(data) <- c("person_id", "year", "question_id", "answer_id", "question", "answer")
+```
+
+Katsotaan yksittäiset kysymykset
+
+```{r}
+questions <- unique(data$question)
+questions
+```
+Turkitaan siis mielenterveyttä (tai henkistä jaksamista)
+
+Olisiko target tällöin tyokykyHenkinen
+
+Tsektaana mitä se pitää sisällään
+
+```{r}
+data2 <- data %>% 
+  filter(question == "tyokykyHenkinen")
+data4 <- unique(data2$answer); data4
+```
+Kuinka paljon vastauksia per vuosi
+
+```{r}
+table(data2$answer, data2$year)
+```
+Vastauksia näyttää olevan ihan okei...
+target voisi olla, että jos työkyky on melko huono/erittäin huono niin 1 ja muuten 0?
+
+Luodaan muuttuja target_tyokykyHenkinen ja työstetään sitä data3:ssa
+
+```{r}
+data3 <- data_raw
+data3$target_tyokykyHenkinen <- ifelse(data3$t13 %in% c("4", "5"), 1, 0)
+```
+
+Lisätty ensimmäinen target data3:seen
+
+```{r}
+table(data3$vuosi, data3$target_tyokykyHenkinen)
+```
+Näyttää ok:lta
+
+Toinen target
+
+eli TyokykyFyysinen samalla logiikalla kuin henkinen
+
+```{r}
+data2 <- data %>% 
+  filter(question == "tyokykyFyysinen")
+data4 <- unique(data2$answer); data4
+```
+Kuinka paljon vastauksia per vuosi
+
+```{r}
+table(data2$answer, data2$year)
+```
+```{r}
+data3$target_tyokykyFyysinen <- ifelse(data3$t12 %in% c("4", "5"), 1, 0)
+```
+
+Lisätty toinen target data3:seen
+
+```{r}
+table(data3$vuosi, data3$target_tyokykyFyysinen)
+```
+Hyvältä näyttää sekin...
+
+Kokeillaan vielä kolmas target, joka on tyokykyArvio
+
+```{r}
+data2 <- data %>% 
+  filter(question == "tyokykyArvio")
+data4 <- unique(data2$answer); data4
+```
+Kuinka paljon vastauksia per vuosi
+
+```{r}
+table(data2$answer, data2$year)
+```
+
+```{r}
+data3$target_tyokykyArvio <- ifelse(data3$t11 < 7, 1, 0)
+```
+
+Lisätty toinen target data3:seen
+
+```{r}
+table(data3$vuosi, data3$target_tyokykyArvio)
+```
+Tehään vielä target, jossa otetaan kaikki kolme aiempaa targettia huomioon
+
+```{r}
+data3$target_tyokyky <- ifelse(data3$target_tyokykyFyysinen == 1 | data3$target_tyokykyHenkinen == 1 | data3$target_tyokykyArvio == 1, 1, 0)
+```
+
+```{r}
+table(data3$vuosi, data3$target_tyokyky)
+```
+
+Selittäviä muuttujia nyt mukaan:
+
+Ensimmäinen on sukupuoli
+
+```{r}
+data2 <- data %>% 
+  filter(question == "sukupuoli")
+data4 <- unique(data2$answer); data4
+table(data2$answer, data2$year)
+```
+Sukupoli ok, lisätään sellaisenaan
+
+Toimiala voidaan lisätä mukaan jos vuosi 1997 pudotetaan pois. Tämä ok, tehdään niin
+
+```{r}
+data2 <- data %>% 
+  filter(question_id == "tol2008")
+data4 <- unique(data2$answer); data4
+table(data2$answer, data2$year)
+```
+Toimialoja T ja Z aika vähän... voisi pudottaa pois
+
+
+
+
+Tsekataan tähän väliin, että kuinka monta vastausta per question_id
+
+```{r}
+table(data$question_id) 
+```
+Etätyö seuraavaksi
+
+
+```{r}
+data2 <- data %>% 
+  filter(question_id == "b24d")
+data4 <- unique(data2$answer); data4
+table(data2$answer, data2$year)
+```
+Otetaan etätyöfreq mukaan. Muuta ei siihen liittyen löytynyt. Vastaukset näyttää olevan ok. Paitsi vastauksia ei näytä olevan kuin 2003 alkaen... Otetaan aluksi mukaan mutta jätetään pois myöhemmin jos vaikuttaa paljon. B24d näyttää sisältävän paljon NA arvoja... oletetaanko, että ne eivät tee etätöitä??
+
+```{r}
+## Tehdään muuttuja b24e eli etätyöFreq mutta ilman NA arvoja
+data3$b24f <- ifelse(is.na(data3$b24d) == TRUE | data3$b24d == 8 | data3$b24d == 9, 0,  data3$b24d)
+```
+
+Seuraavaksi selittäväksi esimiestuki, katsotaan vastaukset:
+
+```{r}
+data2 <- data %>% 
+  filter(question_id == "j20")
+data4 <- unique(data2$answer); data4
+table(data2$answer, data2$year)
+```
+
+Myös johdon tuki olisi hyvä ottaa mukaan. Katsotaan siitäkin vastaukset
+
+```{r}
+data2 <- data %>% 
+  filter(question_id == "j35")
+data4 <- unique(data2$answer); data4
+table(data2$answer, data2$year)
+```
+Seuraavaksi tiimityö
+
+```{r}
+data2 <- data %>% 
+  filter(question_id == "j16b")
+data4 <- unique(data2$answer); data4
+table(data2$answer, data2$year)
+```
+
+
+Iän simulointi
+
+```{r}
+## Age simulation function
+age_simulation <- function(x){
+  if(x == "1"){
+    round(runif(1, min = 24, max = 34), digits = 1)
+  } else if(x == "2") {
+    round(runif(1, min = 34, max = 44), digits = 1)
+  } else if(x == "3") {
+    round(runif(1, min = 44, max = 54), digits = 1)
+  } else {
+    round(runif(1, min = 54, max = 64), digits = 1)
+  }
+}
+
+data3$ika_simuloitu <- sapply(data3$ika, age_simulation)
+```
+
+
+
+Final datasetti
+
+```{r}
+data_final <- data3 %>% 
+  filter(vuosi > 2002) %>% #Vuosi 1997 pudettu pois toimialan vuoksi. Vuoden 1997 ja 2000 pudotettu pois etätyön vuoksi 
+  filter(j20 < 6) %>% # Eli tässä otetaan pois kaikki kenellä ei ole esimiestä tai ei osaa vastata
+  filter(j35 < 6) %>% # Otetaan tässä pois ne jotka eivät osaa vastata JohdonHuolenpitoon
+  filter(j16b < 6) %>% # Otetaan tiimityöstä pois jotka eivät vastaa/osaa sanoa
+  select(id,
+         vuosi,
+         b1, #Sukupuoli
+         tol2008, #Toimiala
+         b24f, #Etätyö (itse tehty muuttuja, ei löydy metadatasta (pitää siis lisätä sinne))
+         ika, # Otetaan mukaan ihan tarkastuksen vuoksi
+         ika_simuloitu, # simuloitu ika, itse tehty, ei metaa
+         j20, #esimiestuki, ei vielä muokattu, vain filtteröity
+         j35, #johdonHuolenpito, ei muoktattu, vain filtteröity
+         j16b, #tiimityö, ei muokattu, filtteröity
+         target_tyokykyHenkinen,
+         target_tyokykyFyysinen,
+         target_tyokykyArvio,
+         target_tyokyky
+         ) %>% 
+  mutate(j20j35 = j20 + j35) %>%  # uusi muuttuja johdon huolenpidosta ja esimiestuesta. Aika vähän arvoja ääripäässä eli 8, 9.. pitäisikö yhdistää??
+  mutate(j20j35mod = ifelse(j20j35 > 8, 8, j20j35)) %>% # yhdistetty j20j35 ja korvattu ääriarvot, tämä hyvä selittäjä
+  mutate(b24fmod = ifelse(b24f == 0, 0, 1))  # Tehdään etätyödummy muuttuja
+```
+
+
+```{r}
+model <- survfit(Surv(ika_simuloitu, target_tyokyky) ~ j16b, data = data_final)
+
+ggsurvplot(model,
+           data = data_final,
+           xlim = c(35, 64),
+           ylim = c(0.2, 1)
+          )
+```
+
+
+Muistiinpano: Esimiestuki (eli j20) on erittäin hyvä selittävä muuttuja!!! Siihen voisi vielä ottaa juuri sukupuolen mukaan, jotta nähdään vaikutus sukupuolittain. Havaintoja aika paljon ja kuvaaja näyttää hyvältä. Myös johdonHuolenpit(j35) antaa samanlaisia indikaattoreita. Kuvaaja erittäin hyvä. Tässä olisi aihetta raportille...Lisäsin nyt vielä muuttujan j20j35 joka on yhteenlaskettu esimiestuesta ja johdonhuolenpidosta... Tässä mitä pienempi arvo sitä enemmän tukea. Tässä näkyy sama efekti. Voisi melkein käyttää tätä. Etätyö ei oikein tuo mitään lisää... sen voisi varmaan jättää pois. Tiimityöllä myös yllätävän positiivinen vaikutus ja kuvaaja näyttää hyvätlä.
+
+
+
+
+
+Saadaanko ääkköset pois??
+

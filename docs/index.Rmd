@@ -74,6 +74,8 @@ data <- na.omit(data)
 colnames(data) <- c("person_id", "year", "question_id", "answer_id", "question", "answer")
 ```
 
+
+
 Because we are interested on the age of the respondent we need to edit it to proper format.
 
 The difficulty of the age lies in the way the response is given. The respondent can answer his/her age to be somewhere between 35-44 depending on the age group.
@@ -198,4 +200,5 @@ ggsurvplot(model,
            ylab = "Hyvän työkyvyn todennäköisyys",
           )
 ```
+
 
